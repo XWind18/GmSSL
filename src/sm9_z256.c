@@ -350,10 +350,10 @@ int sm9_z256_get_booth(const uint64_t a[4], uint64_t window_size, int i)
 	int n, j;
 
 	if (i == 0) {
-		return ((a[0] << 1) & mask) - (a[0] & mask);
+		return (int)((a[0] << 1) & mask) - (int)(a[0] & mask);
 	}
 
-	j = i * window_size - 1;
+	j = i * (int)window_size - 1;
 	n = j / 64;
 	j = j % 64;
 
@@ -361,7 +361,7 @@ int sm9_z256_get_booth(const uint64_t a[4], uint64_t window_size, int i)
 	if ((64 - j) < (window_size + 1) && n < 3) {
 		wbits |= a[n + 1] << (64 - j);
 	}
-	return (wbits & mask) - ((wbits >> 1) & mask);
+	return (int)(wbits & mask) - (int)((wbits >> 1) & mask);
 }
 
 int sm9_z256_from_hex(sm9_z256_t r, const char *hex)
@@ -385,7 +385,7 @@ void sm9_z256_to_hex(const sm9_z256_t r, char hex[64])
 {
 	int i;
 	for (i = 3; i >= 0; i--) {
-		(void)sprintf(hex + 16*(3-i), "%016llx", r[i]);
+		(void)sprintf(hex + 16*(3-i), "%016llx", (unsigned long long)r[i]);
 	}
 }
 
@@ -1794,7 +1794,11 @@ int sm9_z256_point_from_hex(SM9_Z256_POINT *R, const char hex[64 * 2 + 1])
 
 int sm9_z256_point_is_at_infinity(const SM9_Z256_POINT *P)
 {
-	return sm9_z256_is_zero(P->Z);
+	if (sm9_z256_is_zero(P->Z)) {
+		return 1;
+	} else {
+		return 0;
+	}
 }
 
 void sm9_z256_point_set_infinity(SM9_Z256_POINT *R)
@@ -1843,7 +1847,7 @@ int sm9_z256_point_equ(const SM9_Z256_POINT *P, const SM9_Z256_POINT *Q)
 	sm9_z256_modp_mont_mul(t2, t2, Q->Z);
 	sm9_z256_modp_mont_mul(t3, P->Y, t2);
 	sm9_z256_modp_mont_mul(t4, Q->Y, t1);
-	return sm9_z256_equ(t3, t4);
+	return (int)sm9_z256_equ(t3, t4);
 }
 
 int sm9_z256_point_is_on_curve(const SM9_Z256_POINT *P)
@@ -1997,7 +2001,7 @@ void sm9_z256_point_mul(SM9_Z256_POINT *R, const sm9_z256_t k, const SM9_Z256_PO
 	uint64_t window_size = 5;
 	SM9_Z256_POINT T[16];
 	int R_infinity = 1;
-	int n = (256 + window_size - 1)/window_size;
+	int n = (int)((256 + window_size - 1)/window_size);
 	int i;
 
 	// T[i] = (i + 1) * P
@@ -2107,7 +2111,7 @@ void sm9_z256_point_mul_generator(SM9_Z256_POINT *R, const sm9_z256_t k)
 {
 	size_t window_size = 7;
 	int R_infinity = 1;
-	int n = (256 + window_size - 1) / window_size;
+	int n = (int)(256 + window_size - 1) / window_size;
 	int i;
 
 	for (i = n - 1; i >= 0; i--) {
@@ -2860,15 +2864,15 @@ void sm9_z256_fp12_line_mul(sm9_z256_fp12_t r, const sm9_z256_fp12_t a, const sm
 {
 	sm9_z256_fp4_t r0, r1, r2;
 	sm9_z256_fp2_t t;
-	
+
 	sm9_z256_fp4_t lw4;
 	sm9_z256_fp2_copy(lw4[0], lw[0]);
 	sm9_z256_fp2_copy(lw4[1], lw[2]);
-	
+
 	sm9_z256_fp4_mul(r0, a[0], lw4);
 	sm9_z256_fp4_mul(r1, a[1], lw4);
 	sm9_z256_fp4_mul(r2, a[2], lw4);
-	
+
 	sm9_z256_fp2_mul  (t, a[0][0], lw[1]);
 	sm9_z256_fp2_add  (r2[0], r2[0], t);
 	sm9_z256_fp2_mul  (t, a[0][1], lw[1]);
@@ -2881,7 +2885,7 @@ void sm9_z256_fp12_line_mul(sm9_z256_fp12_t r, const sm9_z256_fp12_t a, const sm
 	sm9_z256_fp2_add  (r1[1], r1[1], t);
 	sm9_z256_fp2_mul_u(t, a[2][1], lw[1]);
 	sm9_z256_fp2_add  (r1[0], r1[0], t);
-	
+
 	sm9_z256_fp4_copy(r[0], r0);
 	sm9_z256_fp4_copy(r[1], r1);
 	sm9_z256_fp4_copy(r[2], r2);
@@ -2894,18 +2898,18 @@ void sm9_z256_pairing(sm9_z256_fp12_t r, const SM9_Z256_TWIST_POINT *Q, const SM
 	SM9_Z256_TWIST_POINT T;
 	SM9_Z256_TWIST_POINT Q1;
 	SM9_Z256_TWIST_POINT Q2;
-	
+	SM9_Z256_AFFINE_POINT P_;
+	sm9_z256_fp2_t lw[3];
+	sm9_z256_fp2_t pre[5]; // same for Q and -Q
+	size_t i;
+
 	sm9_z256_fp2_copy(T.X, Q->X);
 	sm9_z256_fp2_copy(T.Y, Q->Y);
 	sm9_z256_fp2_copy(T.Z, Q->Z);
-	
-	SM9_Z256_AFFINE_POINT P_;
+
 	sm9_z256_point_to_affine(&P_, P);
 	sm9_z256_twist_point_neg(&Q1, Q);
-	
-	sm9_z256_fp2_t lw[3];
-	sm9_z256_fp2_t pre[5]; // same for Q and -Q
-	
+
 	sm9_z256_fp2_sqr(pre[0], Q->Y);
 	sm9_z256_fp2_mul(pre[4], Q->X, Q->Z);
 	sm9_z256_fp2_dbl(pre[4], pre[4]);
@@ -2919,7 +2923,6 @@ void sm9_z256_pairing(sm9_z256_fp12_t r, const SM9_Z256_TWIST_POINT *Q, const SM
 
 	sm9_z256_fp12_set_one(r);
 
-	int i;
 	for (i = 0; i < strlen(abits); i++) {
 		sm9_z256_fp12_sqr(r, r);
 		sm9_z256_eval_g_tangent(&T, lw, &T, &P_);
@@ -2944,7 +2947,7 @@ void sm9_z256_pairing(sm9_z256_fp12_t r, const SM9_Z256_TWIST_POINT *Q, const SM
 
 	sm9_z256_eval_g_line_no_pre(&T, lw, &T, &Q2, &P_);
 	sm9_z256_fp12_line_mul(r, r, lw);
-	
+
 	sm9_z256_final_exponent(r, r);
 }
 
@@ -3010,7 +3013,6 @@ static const uint64_t SM9_Z256_N_BARRETT_MU[5] = {
 
 void sm9_z256_modn_mul(sm9_z256_t r, const sm9_z256_t a, const sm9_z256_t b)
 {
-	sm9_z256_t x, y;
 	uint64_t z[8], h[10], s[8];
 	uint64_t t, c = 0;
 
