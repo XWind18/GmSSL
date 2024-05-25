@@ -1,4 +1,8 @@
-cmake_minimum_required(VERSION 3.6)
+if (CMAKE_VERSION VERSION_LESS "3.0")
+	cmake_minimum_required(VERSION 2.8)
+else()
+	cmake_minimum_required(VERSION 3.6)
+endif()
 project(GmSSL C)
 
 SET(CMAKE_PROJECT_HOMEPAGE_URL "http://gmssl.org")
@@ -610,6 +614,15 @@ SET_TARGET_PROPERTIES(gmssl PROPERTIES VERSION 3.1 SOVERSION 3)
 install(TARGETS gmssl ARCHIVE DESTINATION lib LIBRARY DESTINATION lib RUNTIME DESTINATION bin)
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/gmssl DESTINATION include)
 
+if(UNIX AND NOT APPLE)
+	message(STATUS "Detected Linux, configuring /etc/ld.so.conf.d/gmssl.conf")
+	install(CODE "
+		execute_process(COMMAND mkdir -p /etc/ld.so.conf.d)
+		execute_process(COMMAND bash -c \"echo /usr/local/lib > /etc/ld.so.conf.d/gmssl.conf\")
+		execute_process(COMMAND ldconfig)
+	")
+endif()
+
 
 if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "iOS")
 	add_executable(gmssl-bin ${tools})
@@ -655,9 +668,5 @@ set(CPACK_PACKAGE_NAME "GmSSL")
 set(CPACK_PACKAGE_VENDOR "GmSSL develop team")
 set(CPACK_PACKAGE_VERSION "3.1.2-Dev")
 set(CPACK_PACKAGE_DESCRIPTION_FILE ${PROJECT_SOURCE_DIR}/README.md)
-string(CONCAT CPACK_PACKAGE_DESCRIPTION_SUMMARY
-    "GmSSL is an open source cryptographic toolbox that supports SM2 / SM3 / SM4 / SM9 "
-    "and other national secret (national commercial password) algorithm. ")
-set(CPACK_RESOURCE_FILE_LICENSE "${PROJECT_SOURCE_DIR}/LICENSE")
 set(CPACK_NSIS_MODIFY_PATH ON)
 include(CPack)
