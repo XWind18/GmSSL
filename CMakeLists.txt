@@ -55,7 +55,6 @@ option(ENABLE_SM4_CBC_MAC "Enable SM4-CBC-MAC" ON)
 option(ENABLE_SM2_EXTS "Enable SM2 Extensions" OFF)
 option(ENABLE_SM3_XMSS "Enable SM3-XMSS signature" ON)
 
-option(ENABLE_GMT_0105_RNG "Enable GM/T 0105 Software RNG" OFF)
 
 option(ENABLE_SHA1 "Enable SHA1" ON)
 option(ENABLE_SHA2 "Enable SHA2" ON)
@@ -98,7 +97,6 @@ set(src
 	src/sm9_exch.c
 	src/zuc.c
 	src/zuc_modes.c
-	src/hash_drbg.c
 	src/block_cipher.c
 	src/digest.c
 	src/hmac.c
@@ -196,7 +194,6 @@ set(tests
 	sm2_enc
 	sm9
 	zuc
-	hash_drbg
 	block_cipher
 	digest
 	hmac
@@ -497,13 +494,6 @@ if (ENABLE_SM4_CBC_MAC)
 endif()
 
 
-if (ENABLE_GMT_0105_RNG)
-	message(STATUS "ENABLE_GMT_0105_RNG is ON")
-	list(APPEND src src/sm3_rng.c src/sm4_rng.c)
-	list(APPEND tests sm3_rng sm4_rng)
-endif()
-
-
 check_symbol_exists(getentropy "unistd.h" HAVE_GETENTROPY)
 if (WIN32)
 	add_definitions(-D_WINSOCK_DEPRECATED_NO_WARNINGS)
@@ -657,10 +647,12 @@ if (CMAKE_C_COMPILER_ID MATCHES "MSVC")
 endif()
 
 
-add_test(NAME gmssl_sm3 COMMAND ${CMAKE_COMMAND} -P "${CMAKE_SOURCE_DIR}/cmake/gmssl_sm3.cmake")
-add_test(NAME gmssl_sm2 COMMAND ${CMAKE_COMMAND} -P "${CMAKE_SOURCE_DIR}/cmake/gmssl_sm2.cmake")
-add_test(NAME gmssl_cert COMMAND ${CMAKE_COMMAND} -P "${CMAKE_SOURCE_DIR}/cmake/gmssl_cert.cmake")
-add_test(NAME gmssl_tlcp COMMAND ${CMAKE_COMMAND} -P "${CMAKE_SOURCE_DIR}/cmake/gmssl_tlcp.cmake")
+add_test(NAME sm3_commands COMMAND ${CMAKE_COMMAND} -P "${CMAKE_SOURCE_DIR}/cmake/sm3_commands.cmake")
+add_test(NAME sm2_commands COMMAND ${CMAKE_COMMAND} -P "${CMAKE_SOURCE_DIR}/cmake/sm2_commands.cmake")
+add_test(NAME cert_commands COMMAND ${CMAKE_COMMAND} -P "${CMAKE_SOURCE_DIR}/cmake/cert_commands.cmake")
+add_test(NAME tlcp_commands COMMAND ${CMAKE_COMMAND} -P "${CMAKE_SOURCE_DIR}/cmake/tlcp_commands.cmake")
+add_test(NAME tls12_commands COMMAND ${CMAKE_COMMAND} -P "${CMAKE_SOURCE_DIR}/cmake/tls12_commands.cmake")
+add_test(NAME tls13_commands COMMAND ${CMAKE_COMMAND} -P "${CMAKE_SOURCE_DIR}/cmake/tls13_commands.cmake")
 
 # Generate install package with cpack
 #	cpack -G TGZ
