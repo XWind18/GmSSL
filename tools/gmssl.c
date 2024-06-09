@@ -70,6 +70,8 @@ extern int sdfinfo_main(int argc, char **argv);
 extern int sdfdigest_main(int argc, char **argv);
 extern int sdfexport_main(int argc, char **argv);
 extern int sdfsign_main(int argc, char **argv);
+extern int sdfencrypt_main(int argc, char **argv);
+extern int sdfdecrypt_main(int argc, char **argv);
 extern int sdftest_main(int argc, char **argv);
 #endif
 #ifdef ENABLE_SKF
@@ -133,6 +135,8 @@ static const char *options =
 	"  sdfdigest         Generate SM3 hash with SDF device\n"
 	"  sdfexport         Export SM2 signing public key from SDF device\n"
 	"  sdfsign           Generate SM2 signature with SDF internal private key\n"
+	"  sdfencrypt        SM2/SM4-CBC hybrid encryption with SDF device\n"
+	"  sdfdecrypt        SM2/SM4-CBC hybrid decryption with SDF device\n"
 	"  sdftest           Test vendor's SDF library and device\n"
 #endif
 #ifdef ENABLE_SKF
@@ -291,6 +295,10 @@ int main(int argc, char **argv)
 			return sdfexport_main(argc, argv);
 		} else if (!strcmp(*argv, "sdfsign")) {
 			return sdfsign_main(argc, argv);
+		} else if (!strcmp(*argv, "sdfencrypt")) {
+			return sdfencrypt_main(argc, argv);
+		} else if (!strcmp(*argv, "sdfdecrypt")) {
+			return sdfdecrypt_main(argc, argv);
 		} else if (!strcmp(*argv, "sdftest")) {
 			return sdftest_main(argc, argv);
 #endif

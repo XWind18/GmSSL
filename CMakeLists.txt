@@ -63,7 +63,6 @@ option(ENABLE_CHACHA20 "Enable Chacha20" ON)
 
 option(ENABLE_SKF "Enable SKF module" OFF)
 option(ENABLE_SDF "Enable SDF module" ON)
-option(ENABLE_CRYPTO_SDF "Enable SDF as default crypto implementation" OFF)
 
 option(ENABLE_ASM_UNDERSCORE_PREFIX "Add prefix `_` to assembly symbols" ON)
 
@@ -522,27 +521,6 @@ if (ENABLE_SKF)
 	set_target_properties(skf_dummy PROPERTIES VERSION 3.1 SOVERSION 3)
 endif()
 
-
-if (ENABLE_CRYPTO_SDF)
-	message(STATUS "ENABLE_CRYPTO_SDF is ON")
-	add_definitions(-DENABLE_CRYPTO_SDF)
-	list(FIND src src/sm3_digest.c sm3_digest_index)
-	list(REMOVE_AT src ${sm3_digest_index})
-	list(INSERT src ${sm3_digest_index} src/sdf/sdf_sm3.c)
-
-	list(FIND src src/sm4_cbc.c index)
-	list(REMOVE_AT src ${index})
-	list(INSERT src ${index} src/sdf/sdf_sm4_cbc.c)
-
-	list(FIND src src/sm2_sign.c index)
-	list(REMOVE_AT src ${index})
-	list(INSERT src ${index} src/sdf/sdf_sm2_sign.c)
-
-	list(FIND src src/sm2_enc.c index)
-	list(REMOVE_AT src ${index})
-	list(INSERT src ${index} src/sdf/sdf_sm2_enc.c)
-endif()
-
 if (ENABLE_SDF)
 	message(STATUS "ENABLE_SDF is ON")
 	add_definitions(-DENABLE_SDF)
@@ -552,7 +530,7 @@ if (ENABLE_SDF)
 		src/sdf/sdf_meth.c
 		src/sdf/sdf_ext.c
 		src/sdf/sdf_sansec.c)
-	list(APPEND tools tools/sdfinfo.c tools/sdfdigest.c tools/sdfexport.c tools/sdfsign.c tools/sdftest.c)
+	list(APPEND tools tools/sdfinfo.c tools/sdfdigest.c tools/sdfexport.c tools/sdfsign.c tools/sdfencrypt.c tools/sdfdecrypt.c tools/sdftest.c)
 endif()
 
 
@@ -650,9 +628,11 @@ endif()
 add_test(NAME sm3_commands COMMAND ${CMAKE_COMMAND} -P "${CMAKE_SOURCE_DIR}/cmake/sm3_commands.cmake")
 add_test(NAME sm2_commands COMMAND ${CMAKE_COMMAND} -P "${CMAKE_SOURCE_DIR}/cmake/sm2_commands.cmake")
 add_test(NAME cert_commands COMMAND ${CMAKE_COMMAND} -P "${CMAKE_SOURCE_DIR}/cmake/cert_commands.cmake")
-add_test(NAME tlcp_commands COMMAND ${CMAKE_COMMAND} -P "${CMAKE_SOURCE_DIR}/cmake/tlcp_commands.cmake")
-add_test(NAME tls12_commands COMMAND ${CMAKE_COMMAND} -P "${CMAKE_SOURCE_DIR}/cmake/tls12_commands.cmake")
-add_test(NAME tls13_commands COMMAND ${CMAKE_COMMAND} -P "${CMAKE_SOURCE_DIR}/cmake/tls13_commands.cmake")
+if(NOT WIN32)
+	add_test(NAME tlcp_commands COMMAND ${CMAKE_COMMAND} -P "${CMAKE_SOURCE_DIR}/cmake/tlcp_commands.cmake")
+	add_test(NAME tls12_commands COMMAND ${CMAKE_COMMAND} -P "${CMAKE_SOURCE_DIR}/cmake/tls12_commands.cmake")
+	add_test(NAME tls13_commands COMMAND ${CMAKE_COMMAND} -P "${CMAKE_SOURCE_DIR}/cmake/tls13_commands.cmake")
+endif()
 
 # Generate install package with cpack
 #	cpack -G TGZ
